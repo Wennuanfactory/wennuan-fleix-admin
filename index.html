@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#C9A84C">
+<title>Fleix Admin · Order Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#C9A84C; --gold-dark:#A8862E;
+  --cream:#F8F3E8; --cream-dark:#EDE4CE;
+  --brown:#3D2B1F; --brown-light:#6B4F3F;
+  --ok:#2E7D32; --err:#C62828; --warn:#E07D10;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{
+  background:var(--cream); color:var(--brown);
+  font-family:'Inter',sans-serif; font-size:14px; line-height:1.5;
+  min-height:100vh;
+}
+a{color:var(--gold-dark);text-decoration:none}
+a:hover{color:var(--brown)}
+button{font-family:inherit;cursor:pointer;border:0;font-weight:500}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--brown)}
+
+/* ─── Topbar ─── */
+.topbar{
+  background:linear-gradient(135deg,var(--brown) 0%,#2A1E15 100%);
+  color:var(--cream); padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.topbar .brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--cream);display:flex;align-items:center;gap:10px}
+.topbar .mark{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#F2DA92 0%,var(--gold) 38%,var(--gold-dark) 100%);display:inline-flex;align-items:center;justify-content:center;color:#1A1209;font-family:'Playfair Display',serif;font-weight:700;font-size:14px}
+.topbar .right{display:flex;align-items:center;gap:14px;font-size:13px}
+.topbar .user{color:var(--gold);font-weight:500}
+.topbar .logout{background:transparent;color:var(--cream);border:1px solid rgba(255,255,255,0.25);padding:6px 14px;border-radius:8px;font-size:12px;transition:all .2s}
+.topbar .logout:hover{background:var(--gold);color:#1A1209;border-color:var(--gold)}
+
+/* ─── Login screen ─── */
+.login-wrap{max-width:440px;margin:80px auto;padding:0 22px}
+.login-card{background:#fffefb;padding:40px 32px;border-radius:14px;border:1px solid var(--cream-dark);box-shadow:0 8px 28px -10px rgba(61,43,31,0.18)}
+.login-card h1{font-family:'Playfair Display',serif;font-size:30px;color:var(--brown);text-align:center;margin-bottom:6px}
+.login-card .sub{color:var(--brown-light);text-align:center;margin-bottom:28px;font-size:13px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--brown-light);font-weight:600;margin-bottom:7px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;background:var(--cream);
+  border:1.5px solid var(--cream-dark);border-radius:9px;
+  transition:border-color .2s,background .2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--gold);background:#fffefb;
+  box-shadow:0 0 0 3px rgba(201,168,76,0.15);
+}
+.field-hint{font-size:11px;color:var(--brown-light);margin-top:5px;font-style:italic}
+.btn-primary{
+  width:100%;padding:14px;font-size:14px;font-weight:600;letter-spacing:0.5px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;
+  border-radius:9px;transition:transform .15s,box-shadow .2s;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 22px -8px rgba(168,134,46,0.5)}
+.btn-primary:disabled{opacity:0.55;cursor:wait;transform:none}
+.err-msg{margin-top:12px;padding:10px 14px;border-radius:8px;background:#FDECEA;color:var(--err);font-size:13px;border-left:3px solid var(--err);display:none}
+.err-msg.show{display:block}
+.ok-msg{margin-top:12px;padding:10px 14px;border-radius:8px;background:#E8F5E9;color:var(--ok);font-size:13px;border-left:3px solid var(--ok);display:none}
+.ok-msg.show{display:block}
+
+/* ─── Main app ─── */
+.app{display:none}
+.app.show{display:block}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 22px 60px}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.toolbar h2{font-family:'Playfair Display',serif;font-size:26px;color:var(--brown);font-weight:700}
+.toolbar h2 .count{font-size:14px;color:var(--brown-light);font-weight:400;margin-left:10px;font-family:'Inter',sans-serif}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:10px 18px;font-size:13px;font-weight:600;border-radius:8px;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-new{background:var(--gold);color:#1A1209}
+.btn-new:hover{background:var(--gold-dark);color:#fff}
+.btn-refresh{background:#fffefb;color:var(--brown);border:1.5px solid var(--cream-dark)}
+.btn-refresh:hover{border-color:var(--gold)}
+.btn-push{background:var(--brown);color:var(--cream)}
+.btn-push:hover{background:var(--gold-dark);color:#fff}
+.btn-push.dirty{background:var(--warn);color:#fff;animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,125,16,0.6)}50%{box-shadow:0 0 0 8px rgba(224,125,16,0)}}
+
+.status-banner{padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none}
+.status-banner.info{background:rgba(201,168,76,0.12);color:var(--gold-dark);border-left:3px solid var(--gold);display:block}
+.status-banner.dirty{background:#FFF4E5;color:var(--warn);border-left:3px solid var(--warn);display:block}
+.status-banner.ok{background:#E8F5E9;color:var(--ok);border-left:3px solid var(--ok);display:block}
+.status-banner.err{background:#FDECEA;color:var(--err);border-left:3px solid var(--err);display:block}
+
+/* ─── Orders table ─── */
+.orders-card{background:#fffefb;border:1px solid var(--cream-dark);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--cream);color:var(--brown-light);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;padding:12px 14px;text-align:left;border-bottom:1px solid var(--cream-dark)}
+td{padding:14px;border-bottom:1px solid var(--cream-dark);font-size:13px;color:var(--brown);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#FAF7EE}
+td .oid{font-family:'Inter',sans-serif;font-weight:600;color:var(--brown)}
+td .cust{color:var(--brown);font-weight:500}
+td .meta{color:var(--brown-light);font-size:11px;margin-top:2px}
+.tag{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:0.5px}
+.tag-confirmed{background:#E3F2FD;color:#1565C0}
+.tag-cutting{background:#FFF3E0;color:#E65100}
+.tag-sewing{background:#F3E5F5;color:#6A1B9A}
+.tag-qc{background:#E0F2F1;color:#00695C}
+.tag-shipping{background:#E8F5E9;color:#2E7D32}
+.tag-done{background:#ECEFF1;color:#455A64}
+.bar{width:100px;height:6px;background:var(--cream-dark);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .4s}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.row-btn{padding:6px 11px;font-size:11px;font-weight:600;border-radius:6px;background:transparent;color:var(--brown-light);border:1px solid var(--cream-dark);transition:all .15s}
+.row-btn:hover{border-color:var(--gold);color:var(--brown)}
+.row-btn.danger:hover{border-color:var(--err);color:var(--err)}
+
+.empty-state{padding:60px 30px;text-align:center;color:var(--brown-light)}
+.empty-state .icon{font-size:42px;margin-bottom:14px;opacity:0.5}
+
+/* ─── Edit modal ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(40,28,18,0.55);display:none;align-items:flex-start;justify-content:center;z-index:100;overflow-y:auto;padding:30px 16px}
+.modal-bg.show{display:flex}
+.modal{background:#fffefb;border-radius:14px;padding:30px 28px;width:100%;max-width:640px;box-shadow:0 20px 60px -20px rgba(0,0,0,0.4);margin-bottom:30px}
+.modal h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--brown);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.modal h3 .x{background:transparent;color:var(--brown-light);font-size:22px;padding:0 6px;border-radius:6px}
+.modal h3 .x:hover{background:var(--cream);color:var(--brown)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:540px){.row2{grid-template-columns:1fr}}
+.input-with-btn{display:flex;gap:6px;align-items:center}
+.input-with-btn input{flex:1}
+.input-with-btn button{padding:11px 14px;background:var(--cream);color:var(--brown);border:1.5px solid var(--cream-dark);border-radius:9px;font-size:12px;white-space:nowrap;font-weight:600}
+.input-with-btn button:hover{border-color:var(--gold);background:#fffefb}
+
+.updates-section{margin-top:18px;padding-top:18px;border-top:1px dashed var(--cream-dark)}
+.updates-section .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.updates-section .head h4{font-size:13px;color:var(--brown-light);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.updates-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;padding-right:4px}
+.update-item{background:var(--cream);padding:10px 12px;border-radius:8px;display:grid;grid-template-columns:110px 110px 1fr auto;gap:8px;align-items:center}
+.update-item input,.update-item select{padding:7px 9px;font-size:12px;background:#fffefb;border:1px solid var(--cream-dark);border-radius:6px}
+.update-item .del{background:transparent;color:var(--brown-light);font-size:18px;padding:0 8px;border-radius:6px}
+.update-item .del:hover{color:var(--err);background:#FDECEA}
+@media(max-width:540px){.update-item{grid-template-columns:1fr 1fr;gap:6px}.update-item .text-field{grid-column:span 2}}
+
+.btn-add-update{margin-top:8px;padding:9px 14px;background:transparent;color:var(--gold-dark);border:1.5px dashed var(--gold);border-radius:8px;font-size:12px;width:100%;font-weight:600}
+.btn-add-update:hover{background:rgba(201,168,76,0.08)}
+
+.modal-footer{margin-top:24px;padding-top:18px;border-top:1px solid var(--cream-dark);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.btn-cancel{padding:11px 22px;background:transparent;color:var(--brown);border:1.5px solid var(--cream-dark);border-radius:8px;font-weight:600;font-size:13px}
+.btn-cancel:hover{border-color:var(--brown)}
+.btn-save{padding:11px 22px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;border-radius:8px;font-weight:600;font-size:13px}
+.btn-save:hover{box-shadow:0 8px 20px -6px rgba(168,134,46,0.5)}
+
+/* Share link box (after saving) */
+.share-link{margin-top:18px;padding:14px;background:#E8F5E9;border-radius:8px;border-left:3px solid var(--ok);font-size:12px}
+.share-link strong{color:var(--ok);display:block;margin-bottom:6px}
+.share-link code{background:#fffefb;padding:6px 8px;border-radius:5px;display:block;word-break:break-all;font-family:'Inter',sans-serif;color:var(--brown);margin-top:5px;border:1px solid var(--cream-dark)}
+.copy-btn{margin-top:6px;padding:5px 10px;background:var(--ok);color:#fff;border-radius:5px;font-size:11px;font-weight:600}
+.copy-btn:hover{background:#1B5E20}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-left:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN SCREEN ════════════ -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <h1>Fleix Admin</h1>
+    <p class="sub">Sign in to manage your customer orders</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="pwd">Admin Password</label>
+        <input type="password" id="pwd" placeholder="Enter your admin password" required>
+        <div class="field-hint">Used to decrypt all your orders (stays in this browser)</div>
+      </div>
+      <div class="field">
+        <label for="pat">GitHub Personal Access Token</label>
+        <input type="password" id="pat" placeholder="ghp_xxx..." required>
+        <div class="field-hint">Required for saving changes back to GitHub. Stored in this browser session only (cleared on logout).</div>
+      </div>
+      <button type="submit" class="btn-primary" id="btnLogin">Sign In</button>
+      <div class="err-msg" id="loginErr"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════ MAIN APP ════════════ -->
+<div id="app" class="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">F</span><span>Fleix Admin</span></div>
+    <div class="right">
+      <span class="user" id="userLabel">Loaded ✓</span>
+      <button class="logout" id="btnLogout">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <h2>Orders <span class="count" id="orderCount">0 orders</span></h2>
+      <div class="btns">
+        <button class="btn btn-new" id="btnNew">+ New Order</button>
+        <button class="btn btn-refresh" id="btnRefresh">↻ Refresh</button>
+        <button class="btn btn-push" id="btnPush">📤 Save &amp; Push to Live</button>
+      </div>
+    </div>
+
+    <div class="status-banner" id="statusBanner"></div>
+
+    <div class="orders-card">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:140px">Order #</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th style="width:120px">Stage</th>
+            <th style="width:150px">Progress</th>
+            <th style="width:110px">Est Ship</th>
+            <th style="width:170px;text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTbody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="icon">📦</div>
+        <div>No orders yet. Click <strong>+ New Order</strong> to create your first one.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ EDIT MODAL ════════════ -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h3>
+      <span id="editTitle">New Order</span>
+      <button class="x" id="btnCloseModal">×</button>
+    </h3>
+
+    <div class="row2">
+      <div class="field">
+        <label>Order Number</label>
+        <input type="text" id="f_oid" placeholder="WN-2026-0144" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>Access Key</label>
+        <div class="input-with-btn">
+          <input type="text" id="f_key" placeholder="Click Generate" autocapitalize="characters" spellcheck="false">
+          <button type="button" id="btnGenKey">🎲 Generate</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Customer</label>
+      <input type="text" id="f_cust" placeholder="Cathy @ AcmeUSA">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Product</label>
+        <input type="text" id="f_prod" placeholder="Bamboo Jersey Hijab">
+      </div>
+      <div class="field">
+        <label>Quantity</label>
+        <input type="text" id="f_qty" placeholder="500 pcs">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Color</label>
+        <input type="text" id="f_col" placeholder="Desert Sand #C9A961">
+      </div>
+      <div class="field">
+        <label>Est Ship Date</label>
+        <input type="date" id="f_ship">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Stage</label>
+        <select id="f_stage">
+          <option value="confirmed">Confirmed</option>
+          <option value="cutting">Cutting</option>
+          <option value="sewing">Sewing</option>
+          <option value="qc">QC</option>
+          <option value="shipping">Shipping</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Progress (0-100%)</label>
+        <input type="number" id="f_prog" min="0" max="100" placeholder="60">
+      </div>
+    </div>
+
+    <div class="updates-section">
+      <div class="head">
+        <h4>Updates Log <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--brown-light)">(latest first)</span></h4>
+      </div>
+      <div class="updates-list" id="updatesList"></div>
+      <button class="btn-add-update" id="btnAddUpdate">+ Add Update Entry</button>
+    </div>
+
+    <div id="shareLink"></div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btnCancelEdit">Cancel</button>
+      <button class="btn-save" id="btnSaveOrder">✓ Save Order</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════
+const REPO_OWNER = 'gguolin36-lang';
+const REPO_NAME  = 'wennuan-fleix';
+const REPO_BRANCH = 'main';
+const ENC_PATH   = 'orders.enc.json';
+const CLIENT_TRACK_URL = 'https://gguolin36-lang.github.io/wennuan-fleix/track/';
+const HASH_SALT  = 'wennuan-track-v1';
+const PBKDF2_ITER = 100000;
+const SS_PAT = 'fleix_admin_pat';
+const SS_PWD = 'fleix_admin_pwd';
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+// runtime state
+let ORDERS = [];        // array of plain orders (decrypted)
+let CURRENT_SHA = null; // sha of orders.enc.json (for PUT)
+let DIRTY = false;      // unsaved changes flag
+let EDITING_IDX = -1;   // -1 = new, else index in ORDERS
+
+// ════════════════════════════════════════════════════════════════
+// Crypto utilities (mirror build-orders.js)
+// ════════════════════════════════════════════════════════════════
+const subtle = window.crypto.subtle;
+function b64ToBuf(b64){const bin=atob(b64);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf;}
+function bufToB64(buf){let s='';const a=new Uint8Array(buf);for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s);}
+async function hashIndex(orderId){
+  const data=new TextEncoder().encode(orderId+HASH_SALT);
+  const h=await subtle.digest('SHA-256',data);const b=new Uint8Array(h);
+  let hex='';for(let i=0;i<16;i++)hex+=b[i].toString(16).padStart(2,'0');return hex;
+}
+async function deriveKey(pwd,saltBuf,usage){
+  const base=await subtle.importKey('raw',new TextEncoder().encode(pwd),{name:'PBKDF2'},false,['deriveKey']);
+  return subtle.deriveKey({name:'PBKDF2',salt:saltBuf,iterations:PBKDF2_ITER,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,usage);
+}
+async function encryptWith(pwd,plainStr){
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await deriveKey(pwd,salt,['encrypt']);
+  const ct=await subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(plainStr));
+  return {salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)};
+}
+async function decryptWith(pwd,salt,iv,ct){
+  try{
+    const key=await deriveKey(pwd,b64ToBuf(salt),['decrypt']);
+    const pt=await subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(iv)},key,b64ToBuf(ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }catch(_){return null;}
+}
+function makeAccessKey(){
+  const buf=crypto.getRandomValues(new Uint8Array(12));
+  const chars=[];for(let i=0;i<12;i++)chars.push(ALPHABET[buf[i]%ALPHABET.length]);
+  return chars.slice(0,4).join('')+'-'+chars.slice(4,8).join('')+'-'+chars.slice(8,12).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// GitHub API
+// ════════════════════════════════════════════════════════════════
+async function gh(method,path,body){
+  const pat=sessionStorage.getItem(SS_PAT);
+  if(!pat) throw new Error('No PAT in session');
+  const headers={'Authorization':'Bearer '+pat,'Accept':'application/vnd.github+json'};
+  if(body) headers['Content-Type']='application/json';
+  const r=await fetch('https://api.github.com'+path,{method,headers,body:body?JSON.stringify(body):undefined});
+  const txt=await r.text();
+  let json={};try{json=txt?JSON.parse(txt):{};}catch(_){json={raw:txt};}
+  return {status:r.status,data:json};
+}
+
+async function loadEncryptedBundle(){
+  // 1. try GitHub API (gets sha for later PUT)
+  const r=await gh('GET',`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${ENC_PATH}?ref=${REPO_BRANCH}`);
+  if(r.status!==200) throw new Error('Failed to load orders.enc.json (HTTP '+r.status+')');
+  CURRENT_SHA=r.data.sha;
+  // decode base64 content
+  const b64=r.data.content.replace(/\n/g,'');
+  return JSON.parse(atob(b64));
+}
+
+async function pushEncryptedBundle(bundle,msg){
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(bundle,null,2))));
+  const body={message:msg||'chore(admin): update orders',content:b64,branch:REPO_BRANCH};
+  if(CURRENT_SHA) body.sha=CURRENT_SHA;
+  const r=await gh('PUT',`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${ENC_PATH}`,body);
+  if(r.status>=300) throw new Error('Push failed: '+r.status+' '+JSON.stringify(r.data).slice(0,200));
+  CURRENT_SHA=r.data.content.sha;
+  return r;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Login flow
+// ════════════════════════════════════════════════════════════════
+function showStatus(text,type){
+  const b=document.getElementById('statusBanner');
+  b.className='status-banner '+(type||'info');
+  b.textContent=text;
+  if(type==='ok') setTimeout(()=>{b.className='status-banner';b.textContent='';},4000);
+}
+
+async function doLogin(pwd,pat){
+  // Try to load bundle with this PAT
+  sessionStorage.setItem(SS_PAT,pat);
+  let bundle;
+  try{
+    bundle=await loadEncryptedBundle();
+  }catch(e){
+    sessionStorage.removeItem(SS_PAT);
+    throw new Error('GitHub access failed: '+e.message);
+  }
+  // Try to decrypt one entry with admin pwd to verify
+  if(bundle.entries.length>0){
+    const e0=bundle.entries[0];
+    const test=await decryptWith(pwd,e0.as||e0.salt,e0.ai||e0.iv,e0.ac||e0.ct);
+    if(!test){
+      sessionStorage.removeItem(SS_PAT);
+      throw new Error('Admin password is incorrect (cannot decrypt orders)');
+    }
+  }
+  // Decrypt all
+  ORDERS=[];
+  for(const e of bundle.entries){
+    const o=await decryptWith(pwd,e.as,e.ai,e.ac);
+    if(o) ORDERS.push(o);
+  }
+  sessionStorage.setItem(SS_PWD,pwd);
+  return ORDERS.length;
+}
+
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const pwd=document.getElementById('pwd').value.trim();
+  const pat=document.getElementById('pat').value.trim();
+  const err=document.getElementById('loginErr');
+  err.classList.remove('show');
+  const btn=document.getElementById('btnLogin');
+  btn.disabled=true;btn.innerHTML='Signing in<span class="spinner"></span>';
+  try{
+    const n=await doLogin(pwd,pat);
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').classList.add('show');
+    renderOrdersList();
+    showStatus('Loaded '+n+' order(s) from GitHub','ok');
+  }catch(e){
+    err.textContent=e.message;err.classList.add('show');
+  }finally{
+    btn.disabled=false;btn.textContent='Sign In';
+  }
+});
+
+document.getElementById('btnLogout').addEventListener('click',()=>{
+  if(DIRTY && !confirm('You have unsaved changes. Logout anyway?')) return;
+  sessionStorage.removeItem(SS_PAT);
+  sessionStorage.removeItem(SS_PWD);
+  ORDERS=[];DIRTY=false;CURRENT_SHA=null;
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('loginScreen').style.display='';
+  document.getElementById('pwd').value='';
+  document.getElementById('pat').value='';
+});
+
+// ════════════════════════════════════════════════════════════════
+// List render
+// ════════════════════════════════════════════════════════════════
+function setDirty(d){
+  DIRTY=d;
+  const b=document.getElementById('btnPush');
+  if(d){b.classList.add('dirty');b.textContent='📤 Save & Push (unsaved)';}
+  else{b.classList.remove('dirty');b.textContent='📤 Save & Push to Live';}
+}
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function renderOrdersList(){
+  const tb=document.getElementById('ordersTbody');
+  const empty=document.getElementById('emptyState');
+  document.getElementById('orderCount').textContent=ORDERS.length+' order'+(ORDERS.length===1?'':'s');
+  if(ORDERS.length===0){tb.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  tb.innerHTML=ORDERS.map((o,i)=>{
+    const stage=o.stage||'confirmed';
+    const prog=Math.max(0,Math.min(100,+o.progress||0));
+    return `<tr>
+      <td><div class="oid">${escapeHtml(o.orderId)}</div></td>
+      <td><div class="cust">${escapeHtml(o.customer||'-')}</div><div class="meta">Key: ${escapeHtml(o.accessKey||'-')}</div></td>
+      <td>${escapeHtml(o.product||'-')}<div class="meta">${escapeHtml(o.quantity||'')} ${o.color?'· '+escapeHtml(o.color):''}</div></td>
+      <td><span class="tag tag-${stage}">${escapeHtml(stage)}</span></td>
+      <td><div class="bar"><i style="width:${prog}%"></i></div> <span style="font-size:11px;color:var(--brown-light)">${prog}%</span></td>
+      <td>${escapeHtml(o.estShipDate||'-')}</td>
+      <td><div class="row-actions">
+        <button class="row-btn" onclick="openShare(${i})">🔗 Link</button>
+        <button class="row-btn" onclick="openEdit(${i})">✏️ Edit</button>
+        <button class="row-btn danger" onclick="deleteOrder(${i})">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+window.openShare=function(i){
+  const o=ORDERS[i];
+  const link=CLIENT_TRACK_URL+'?o='+encodeURIComponent(o.orderId)+'&k='+encodeURIComponent(o.accessKey);
+  prompt('Share this direct link with the customer:\n\n('+o.customer+')\n\nThey can copy/paste it in WhatsApp:',link);
+};
+
+window.deleteOrder=function(i){
+  const o=ORDERS[i];
+  if(!confirm('Delete order '+o.orderId+' ('+o.customer+')?\n\nThis only marks it for deletion. You still need to click "Save & Push" to apply.')) return;
+  ORDERS.splice(i,1);
+  setDirty(true);renderOrdersList();
+  showStatus('Order '+o.orderId+' removed. Click "Save & Push" to apply.','dirty');
+};
+
+// ════════════════════════════════════════════════════════════════
+// Edit modal
+// ════════════════════════════════════════════════════════════════
+window.openEdit=function(i){
+  EDITING_IDX=i;
+  const o=(i>=0)?ORDERS[i]:{orderId:'',accessKey:'',customer:'',product:'',quantity:'',color:'',stage:'confirmed',progress:0,estShipDate:'',updates:[]};
+  document.getElementById('editTitle').textContent=(i>=0?'Edit Order':'New Order');
+  document.getElementById('f_oid').value=o.orderId;
+  document.getElementById('f_oid').disabled=(i>=0);  // can't change orderId once created
+  document.getElementById('f_key').value=o.accessKey;
+  document.getElementById('f_cust').value=o.customer||'';
+  document.getElementById('f_prod').value=o.product||'';
+  document.getElementById('f_qty').value=o.quantity||'';
+  document.getElementById('f_col').value=o.color||'';
+  document.getElementById('f_ship').value=o.estShipDate||'';
+  document.getElementById('f_stage').value=o.stage||'confirmed';
+  document.getElementById('f_prog').value=o.progress||0;
+  document.getElementById('shareLink').innerHTML='';
+  renderUpdates(o.updates||[]);
+  document.getElementById('editModal').classList.add('show');
+};
+
+function renderUpdates(updates){
+  const wrap=document.getElementById('updatesList');
+  wrap.innerHTML=updates.map((u,i)=>`
+    <div class="update-item" data-idx="${i}">
+      <input type="date" class="u-date" value="${escapeHtml(u.date||'')}">
+      <select class="u-by">
+        <option value="Procurement" ${u.by==='Procurement'?'selected':''}>Procurement</option>
+        <option value="Warehouse" ${u.by==='Warehouse'?'selected':''}>Warehouse</option>
+      </select>
+      <input type="text" class="u-text text-field" placeholder="Status update..." value="${escapeHtml(u.text||'')}">
+      <button type="button" class="del" onclick="this.parentNode.remove()">×</button>
+    </div>`).join('');
+}
+
+document.getElementById('btnAddUpdate').addEventListener('click',()=>{
+  const wrap=document.getElementById('updatesList');
+  const today=new Date().toISOString().slice(0,10);
+  const div=document.createElement('div');
+  div.className='update-item';
+  div.innerHTML=`
+    <input type="date" class="u-date" value="${today}">
+    <select class="u-by"><option value="Procurement">Procurement</option><option value="Warehouse">Warehouse</option></select>
+    <input type="text" class="u-text text-field" placeholder="Status update...">
+    <button type="button" class="del" onclick="this.parentNode.remove()">×</button>`;
+  wrap.insertBefore(div,wrap.firstChild);
+  div.querySelector('.u-text').focus();
+});
+
+document.getElementById('btnGenKey').addEventListener('click',()=>{
+  document.getElementById('f_key').value=makeAccessKey();
+});
+
+document.getElementById('btnCloseModal').addEventListener('click',closeEdit);
+document.getElementById('btnCancelEdit').addEventListener('click',closeEdit);
+function closeEdit(){document.getElementById('editModal').classList.remove('show');EDITING_IDX=-1;}
+
+document.getElementById('btnSaveOrder').addEventListener('click',()=>{
+  const oid=document.getElementById('f_oid').value.trim();
+  const key=document.getElementById('f_key').value.trim();
+  const cust=document.getElementById('f_cust').value.trim();
+  if(!oid){alert('Order number is required');return;}
+  if(!key){alert('Access key is required. Click 🎲 Generate.');return;}
+  if(!cust){alert('Customer is required');return;}
+  // duplicate orderId check (only for new)
+  if(EDITING_IDX<0 && ORDERS.some(o=>o.orderId===oid)){alert('Order number '+oid+' already exists');return;}
+  // collect updates
+  const updates=[...document.querySelectorAll('#updatesList .update-item')].map(d=>({
+    date:d.querySelector('.u-date').value,
+    by:d.querySelector('.u-by').value,
+    text:d.querySelector('.u-text').value.trim()
+  })).filter(u=>u.text);
+  // sort by date desc (latest first)
+  updates.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const order={
+    orderId:oid,accessKey:key,customer:cust,
+    product:document.getElementById('f_prod').value.trim(),
+    quantity:document.getElementById('f_qty').value.trim(),
+    color:document.getElementById('f_col').value.trim(),
+    stage:document.getElementById('f_stage').value,
+    progress:Math.max(0,Math.min(100,+document.getElementById('f_prog').value||0)),
+    estShipDate:document.getElementById('f_ship').value,
+    updates
+  };
+  if(EDITING_IDX>=0) ORDERS[EDITING_IDX]=order;
+  else ORDERS.push(order);
+  setDirty(true);
+  renderOrdersList();
+  // show share link inline so user can grab it before closing
+  const link=CLIENT_TRACK_URL+'?o='+encodeURIComponent(oid)+'&k='+encodeURIComponent(key);
+  document.getElementById('shareLink').innerHTML=`
+    <div class="share-link">
+      <strong>✓ Saved locally. Don't forget to click "Save & Push" to make it live.</strong>
+      Customer direct link (send via WhatsApp):
+      <code id="lnkCode">${escapeHtml(link)}</code>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('lnkCode').textContent).then(()=>this.textContent='✓ Copied')">📋 Copy link</button>
+    </div>`;
+  showStatus('Order '+oid+' saved locally. Click "Save & Push" to publish.','dirty');
+});
+
+document.getElementById('btnNew').addEventListener('click',()=>openEdit(-1));
+
+// ════════════════════════════════════════════════════════════════
+// Refresh & Push
+// ════════════════════════════════════════════════════════════════
+document.getElementById('btnRefresh').addEventListener('click',async()=>{
+  if(DIRTY && !confirm('Refresh will discard unsaved changes. Continue?')) return;
+  const pwd=sessionStorage.getItem(SS_PWD);if(!pwd){alert('Session expired');location.reload();return;}
+  showStatus('Refreshing from GitHub...','info');
+  try{
+    const bundle=await loadEncryptedBundle();
+    ORDERS=[];
+    for(const e of bundle.entries){
+      const o=await decryptWith(pwd,e.as,e.ai,e.ac);
+      if(o) ORDERS.push(o);
+    }
+    setDirty(false);renderOrdersList();
+    showStatus('Refreshed: '+ORDERS.length+' order(s)','ok');
+  }catch(e){showStatus('Refresh failed: '+e.message,'err');}
+});
+
+document.getElementById('btnPush').addEventListener('click',async()=>{
+  if(!DIRTY){showStatus('Nothing to push (no unsaved changes)','info');return;}
+  const pwd=sessionStorage.getItem(SS_PWD);if(!pwd){alert('Session expired');location.reload();return;}
+  const btn=document.getElementById('btnPush');
+  btn.disabled=true;btn.innerHTML='Pushing<span class="spinner"></span>';
+  try{
+    // build dual-encrypted bundle
+    const entries=[];
+    for(const o of ORDERS){
+      const idx=await hashIndex(o.orderId);
+      const plain=JSON.stringify(o);
+      const cp=await encryptWith(o.accessKey,plain);
+      const ap=await encryptWith(pwd,plain);
+      entries.push({idx,cs:cp.salt,ci:cp.iv,cc:cp.ct,as:ap.salt,ai:ap.iv,ac:ap.ct});
+    }
+    const bundle={version:2,alg:'AES-GCM-256-PBKDF2-100000-dual',entries};
+    await pushEncryptedBundle(bundle,'feat(admin): update orders ('+ORDERS.length+' total)');
+    setDirty(false);
+    showStatus('✓ Pushed '+ORDERS.length+' order(s). Customers can see updates in ~60 seconds.','ok');
+  }catch(e){
+    showStatus('Push failed: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+    if(!DIRTY) btn.textContent='📤 Save & Push to Live';
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// Boot: check sessionStorage on load (auto-resume if reloaded)
+// ════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',async()=>{
+  const pat=sessionStorage.getItem(SS_PAT);
+  const pwd=sessionStorage.getItem(SS_PWD);
+  if(pat && pwd){
+    try{
+      const bundle=await loadEncryptedBundle();
+      ORDERS=[];
+      for(const e of bundle.entries){
+        const o=await decryptWith(pwd,e.as,e.ai,e.ac);
+        if(o) ORDERS.push(o);
+      }
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('app').classList.add('show');
+      renderOrdersList();
+      showStatus('Resumed session: '+ORDERS.length+' order(s) loaded','ok');
+    }catch(_){
+      sessionStorage.removeItem(SS_PAT);sessionStorage.removeItem(SS_PWD);
+    }
+  }
+});
+</script>
+</body>
+</html>
